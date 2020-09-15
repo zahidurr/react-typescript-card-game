@@ -46,7 +46,7 @@ const App: React.FC = () => {
   return (
     <Wrapper>
       <div className="header-content">
-        <h1 className="title">Yepstr Card Game</h1>
+        <h1 className="title">Card Game</h1>
       </div>
 
       {gameOver ? <h1>Game Over</h1> : null}
