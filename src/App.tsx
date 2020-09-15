@@ -1,96 +1,77 @@
-import React, { useState } from 'react';
-import { fetchCards } from './API';
+import React, { useState, useEffect } from "react";
+import { fetchDeckID, fetchCard, CardState } from "./API";
+
+// Styles
+import { Wrapper } from "./App.styles";
+
 // Components
-import DeckCard from './components/Card';
-// types
-import { CardState } from './API';
-
-export type AnswerObject = {
-  card: string;
-  answer: string;
-  correct: boolean;
-  correctAnswer: string;
-};
-
-const TOTAL_CRADS = 10;
+import Card from "./components/Card";
 
 const App: React.FC = () => {
+  const [remaining, setRemaining] = useState("0");
   const [loading, setLoading] = useState(false);
-  const [cards, setQuestions] = useState<CardState[]>([]);
-  const [number, setNumber] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<AnswerObject[]>([]);
-  const [score, setScore] = useState(0);
-  const [gameOver, setGameOver] = useState(true);
-  
+  const [gameOver, setGameOver] = useState(false);
+  const [card, setCard] = useState<CardState>();
+  const [deckID, setDeckID] = useState("");
 
-  const startTrivia = async () => {
-    setLoading(true);
-    setGameOver(false);
-    const newQuestions = await fetchCards(
-      TOTAL_CRADS
-    );
-    setQuestions(newQuestions);
-    setScore(0);
-    setUserAnswers([]);
-    setNumber(0);
-    setLoading(false);
-  };
+  const nextCard = async () => {
+    const fc = await fetchCard(deckID);
 
-  const checkAnswer = (e: any) => {
-    if (!gameOver) {
-      // User's answer
-      const answer = e.currentTarget.value;
-      // Check answer against correct answer
-      const correct = cards[number].correct_answer === answer;
-      // Add score if answer is correct
-      if (correct) setScore((prev) => prev + 1);
-      // Save the answer in the array for user answers
-      const answerObject = {
-        card: cards[number].card,
-        answer,
-        correct,
-        correctAnswer: cards[number].correct_answer,
-      };
-      setUserAnswers((prev) => [...prev, answerObject]);
-    }
-  };
-
-  const nextQuestion = () => {
-    // Move on to the next card if not the last card
-    const nextC = number + 1;
-
-    if (nextC === TOTAL_CRADS) {
+    if (fc === undefined) {
       setGameOver(true);
     } else {
-      setNumber(nextC);
+      // @ts-ignore
+      setCard(fc.card);
+      setRemaining(fc.remaining);
     }
   };
 
+  const getDeckID = async () => {
+    setLoading(true);
+    const fd = await fetchDeckID();
+    if (fd.success) {
+      setDeckID(fd.deck_id);
+      const fc = await fetchCard(fd.deck_id);
+      // @ts-ignore
+      setCard(fc.card);
+      setRemaining(fc.remaining);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getDeckID();
+  }, []);
+
   return (
-    <>
-        <h1>Yepstr Card Game</h1>
-        {gameOver || userAnswers.length === TOTAL_CRADS ? (
-          <button className='start' onClick={startTrivia}>
-            Start
-          </button>
-        ) : null}
-        {!gameOver ? <p className='score'>Score: {score}</p> : null}
-        {loading ? <p>Loading cards...</p> : null}
-        {!loading && !gameOver && (
-          <DeckCard
-            cardNr={number + 1}
-            totalCards={TOTAL_CRADS}
-            card={cards[0].card}
-            userAnswer={userAnswers ? userAnswers[number] : undefined}
-            callback={checkAnswer}
-          />
-        )}
-        {!gameOver && !loading && userAnswers.length === number + 1 && number !== TOTAL_CRADS - 1 ? (
-          <button className='next' onClick={nextQuestion}>
-            Next Card
-          </button>
-        ) : null}
-    </>
+    <Wrapper>
+      <div className="header-content">
+        <h1 className="title">Yepstr Card Game</h1>
+      </div>
+
+      {gameOver ? <h1>Game Over</h1> : null}
+
+      {loading ? <h1>Loading Card...</h1> : null}
+
+      {!loading && !gameOver ? (
+        <p className="info">Remaining: {remaining}</p>
+      ) : null}
+
+      {!loading && !gameOver && (
+        <Card
+          code={card?.code}
+          image={card?.image}
+          value={card?.value}
+          suit={card?.suit}
+        />
+      )}
+
+      {!gameOver ? (
+        <button className="btn-next" onClick={nextCard}>
+          Next Card
+        </button>
+      ) : null}
+    </Wrapper>
   );
 };
 

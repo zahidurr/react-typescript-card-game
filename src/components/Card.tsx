@@ -1,33 +1,24 @@
-import React from 'react';
-// Types
-import { AnswerObject } from '../App';
-import { ButtonWrapper } from './Card.styles';
+import React from "react";
+import { Wrapper } from "./Card.styles";
 
-type Props = {
-  card: string;
-  callback: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  userAnswer: AnswerObject | undefined;
-  cardNr: number;
-  totalCards: number;
-};
+export interface CardProps {
+  code?: string;
+  image?: string;
+  value?: string;
+  suit?: string;
+}
 
-const DeckCard: React.FC<Props> = ({
-  card,
-  callback,
-  userAnswer,
-  cardNr,
-  totalCards,
-}) => (
-  
-  <>
-    <p className='number'>
-      Card: {cardNr} / {totalCards}
-    </p>
-    <p dangerouslySetInnerHTML={{ __html: card }} />
-    <div>
-      {card.image}
+const Card: React.FC<CardProps> = ({ code, image, value, suit }) => (
+  <Wrapper>
+    <div className="card-info">
+      {value} {suit} ({code})
     </div>
-  </>
+    {image && (
+      <div className="image">
+        <img src={image} alt="{suit}" />
+      </div>
+    )}
+  </Wrapper>
 );
 
-export default DeckCard;
+export default Card;
